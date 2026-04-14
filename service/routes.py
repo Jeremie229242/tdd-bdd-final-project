@@ -70,29 +70,23 @@ def check_content_type(content_type):
 ######################################################################
 @app.route("/products", methods=["POST"])
 def create_products():
-    """
-    Creates a Product
-    This endpoint will create a Product based the data in the body that is posted
-    """
     app.logger.info("Request to Create a Product...")
     check_content_type("application/json")
 
     data = request.get_json()
     app.logger.info("Processing: %s", data)
+
     product = Product()
     product.deserialize(data)
     product.create()
+
     app.logger.info("Product with new id [%s] saved!", product.id)
 
     message = product.serialize()
 
-    #
-    # Uncomment this line of code once you implement READ A PRODUCT
-    #
-    # location_url = url_for("get_products", product_id=product.id, _external=True)
-    location_url = "/"  # delete once READ is implemented
-    return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+    location_url = url_for("get_products", product_id=product.id, _external=False)
 
+    return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
 
 ######################################################################
 # L I S T   A L L   P R O D U C T S
@@ -110,7 +104,21 @@ def create_products():
 # PLACE YOUR CODE HERE TO READ A PRODUCT
 #
 
+@app.route("/products/<int:product_id>", methods=["GET"])
+def get_products(product_id):
+    """
+    Retrieve a single Product
 
+    This endpoint will return a Product based on it's id
+    """
+    app.logger.info("Request to Retrieve a product with id [%s]", product_id)
+
+    product = Product.find(product_id)
+    if not product:
+        abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
+
+    app.logger.info("Returning product: %s", product.name)
+    return product.serialize(), status.HTTP_200_OK
 
 ######################################################################
 # U P D A T E   A   P R O D U C T
